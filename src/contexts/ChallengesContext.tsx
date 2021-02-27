@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useState } from "react";
+import { createContext, ReactNode, useEffect, useState } from "react";
 import challenges from "../../challenges.json";
 
 interface Challenge {
@@ -32,6 +32,11 @@ export function ChallengesProvider({ children }: ChallengesProviderProps) {
   const experienceToNextLevel = Math.pow((level + 1) * 4, 2);
 
   const [activeChallenge, setActiveChallenge] = useState(null);
+
+  useEffect(() => {
+    Notification.requestPermission();
+  }, []);
+
   const levelUp = () => {
     setLevel(level + 1);
   };
@@ -43,28 +48,34 @@ export function ChallengesProvider({ children }: ChallengesProviderProps) {
     const challenge = challenges[randomChallengeIndex];
 
     setActiveChallenge(challenge);
+
+    new Audio('./notification.mp3').play();
+
+    console.log(Notification.permission);
+    if (Notification.permission ===  'granted') {
+      new Notification("Novo desafio 🎉", {
+        body: `Valendo ${challenge.amount}xp!`,
+      });
+    }
   };
 
   const resetChallenge = () => {
     setActiveChallenge(null);
   };
-  const completeChallenge = () => { 
-    if(!activeChallenge)
-      return; 
-    
-    const {amount} = activeChallenge; 
-    let finalExperience = currentExperience + amount; 
+  const completeChallenge = () => {
+    if (!activeChallenge) return;
 
-    if(finalExperience >= experienceToNextLevel)
-    {
-      finalExperience = finalExperience - experienceToNextLevel; 
+    const { amount } = activeChallenge;
+    let finalExperience = currentExperience + amount;
+
+    if (finalExperience >= experienceToNextLevel) {
+      finalExperience = finalExperience - experienceToNextLevel;
       levelUp();
     }
 
-    setCurrentExperience(finalExperience); 
+    setCurrentExperience(finalExperience);
     setActiveChallenge(null);
-    setChallengesCompleted(challengesCompleted +1);
-
+    setChallengesCompleted(challengesCompleted + 1);
   };
   return (
     <ChallengesContext.Provider
@@ -77,7 +88,7 @@ export function ChallengesProvider({ children }: ChallengesProviderProps) {
         levelUp,
         startNewChallenge,
         resetChallenge,
-        completeChallenge
+        completeChallenge,
       }}
     >
       {children}
